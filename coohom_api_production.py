@@ -20,10 +20,7 @@ class CoohomUploader:
     
     def generate_signature(self, params):
         """Generate signature for API authentication."""
-        filtered_params = {k: v for k, v in params.items() if k != 'sign'}
-        sorted_params = sorted(filtered_params.items())
-        param_string = '&'.join([f"{k}={v}" for k, v in sorted_params])
-        sign_string = f"{param_string}&{self.app_secret}"
+        sign_string = f"{params['appsecret']}{params['appkey']}{params['timestamp']}"
         signature = hashlib.md5(sign_string.encode('utf-8')).hexdigest()
         return signature
     
@@ -39,10 +36,11 @@ class CoohomUploader:
         for attempt in range(max_retries):
             try:
                 encoded_filename = quote(filename)
-                timestamp = str(int(time.time()))
+                timestamp = str(int(time.time()) * 1000)
                 params = {
                     'appkey': self.app_key,
                     'timestamp': timestamp,
+                    'appsecret': self.app_secret,
                     'file_name': encoded_filename
                 }
                 
@@ -116,7 +114,7 @@ class CoohomUploader:
     def check_upload_status(self, upload_task_id):
         """Check the status of an upload task."""
         try:
-            timestamp = str(int(time.time()))
+            timestamp = str(int(time.time()) * 1000)
             params = {
                 'appkey': self.app_key,
                 'timestamp': timestamp,
