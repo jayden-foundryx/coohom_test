@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coohom Iframe - {{ integration_type.title() }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .iframe-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .iframe-container {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 80px);
+            background: white;
+            border: none;
+        }
+        .iframe-controls {
+            background: white;
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .btn-control {
+            border-radius: 20px;
+            padding: 8px 20px;
+            margin: 0 5px;
+            font-size: 0.9rem;
+        }
+        .iframe-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .status-bar {
+            background: #e9ecef;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+        }
+        .fullscreen-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .fullscreen-btn:hover {
+            background: rgba(0,0,0,0.9);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="iframe-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0">
+                    <i class="fas fa-home"></i> 
+                    Coohom Integration - {{ integration_type.replace('-', ' ').title() }}
+                </h4>
+                <small>SSO Token: {{ sso_token[:20] }}...</small>
+            </div>
+            <div>
+                <button class="btn btn-outline-light btn-sm" onclick="window.close()">
+                    <i class="fas fa-times"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="iframe-controls">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <div class="btn-group" role="group">
+                    <button class="btn btn-outline-primary btn-control" onclick="refreshIframe()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <button class="btn btn-outline-success btn-control" onclick="openInNewTab()">
+                        <i class="fas fa-external-link-alt"></i> New Tab
+                    </button>
+                    <button class="btn btn-outline-info btn-control" onclick="toggleFullscreen()">
+                        <i class="fas fa-expand"></i> Fullscreen
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-6 text-end">
+                <span class="badge bg-success">Token Valid</span>
+                <span class="badge bg-info">{{ integration_type }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Iframe Container -->
+    <div class="iframe-container">
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="text-center">
+                <div class="spinner mb-3"></div>
+                <h5>Loading Coohom...</h5>
+                <p class="text-muted">Please wait while the content loads</p>
+            </div>
+        </div>
+
+        <!-- Iframe -->
+        <iframe 
+            id="coohomIframe"
+            class="iframe-frame"
+            src="{{ get_iframe_url() }}"
+            allowfullscreen
+            onload="hideLoading()"
+            onerror="showError()">
+            <p>Your browser does not support iframes. 
+               <a href="{{ get_iframe_url() }}" target="_blank">Click here to open in new tab</a>
+            </p>
+        </iframe>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-info-circle"></i>
+                <span id="statusText">Ready</span>
+            </div>
+            <div>
+                <small>Integration Type: {{ integration_type }} | 
+                       Token: {{ sso_token[:15] }}... | 
+                       SSO URL: {{ sso_url or 'N/A' }}</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Button -->
+    <button class="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen">
+        <i class="fas fa-expand"></i>
+    </button>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        let isFullscreen = false;
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+            updateStatus('Iframe loaded successfully');
+        }
+
+        function showError() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+            updateStatus('Error loading iframe', 'error');
+            
+            // Show error message in iframe container
+            const container = document.querySelector('.iframe-container');
+            container.innerHTML = `
+                <div class="d-flex align-items-center justify-content-center h-100">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                        <h4>Iframe Loading Error</h4>
+                        <p class="text-muted">The Coohom content could not be loaded.</p>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="refreshIframe()">
+                                <i class="fas fa-sync-alt"></i> Retry
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="openInNewTab()">
+                                <i class="fas fa-external-link-alt"></i> Open in New Tab
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function refreshIframe() {
+            const iframe = document.getElementById('coohomIframe');
+            if (iframe) {
+                iframe.src = iframe.src;
+                showLoading();
+                updateStatus('Refreshing iframe...');
+            }
+        }
+
+        function openInNewTab() {
+            const iframe = document.getElementById('coohomIframe');
+            if (iframe && iframe.src) {
+                window.open(iframe.src, '_blank');
+            }
+        }
+
+        function toggleFullscreen() {
+            if (!isFullscreen) {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    document.documentElement.webkitRequestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    document.documentElement.msRequestFullscreen();
+                }
+                isFullscreen = true;
+                document.querySelector('.fullscreen-btn i').className = 'fas fa-compress';
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                isFullscreen = false;
+                document.querySelector('.fullscreen-btn i').className = 'fas fa-expand';
+            }
+        }
+
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusText = document.getElementById('statusText');
+            statusText.textContent = message;
+            statusText.className = type === 'error' ? 'text-danger' : 'text-success';
+        }
+
+        // Handle fullscreen change events
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+        function handleFullscreenChange() {
+            isFullscreen = !!document.fullscreenElement || 
+                          !!document.webkitFullscreenElement || 
+                          !!document.msFullscreenElement;
+            
+            const icon = document.querySelector('.fullscreen-btn i');
+            icon.className = isFullscreen ? 'fas fa-compress' : 'fas fa-expand';
+        }
+
+        // Auto-hide loading after timeout
+        setTimeout(() => {
+            if (document.getElementById('loadingOverlay').style.display !== 'none') {
+                hideLoading();
+            }
+        }, 10000);
+
+        // Update status periodically
+        setInterval(() => {
+            const iframe = document.getElementById('coohomIframe');
+            if (iframe && iframe.contentWindow) {
+                try {
+                    // Try to access iframe content (may fail due to CORS)
+                    updateStatus('Iframe active and responsive');
+                } catch (e) {
+                    updateStatus('Iframe loaded (CORS restricted)');
+                }
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

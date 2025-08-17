@@ -1,78 +1,245 @@
-# Coohom 3D File Uploader
+# 🏠 Coohom Iframe Integration with Streamlit
 
-A Streamlit web application for uploading 3D model files to the Coohom platform using their OpenAPI.
+A comprehensive demonstration of integrating Coohom design tools into your applications using iframe embedding with Single Sign-On (SSO) authentication.
 
-## Features
+## ✨ Features
 
-- 🏠 **Easy Upload Interface**: Drag and drop 3D files for upload
-- 📦 **Auto-ZIP Creation**: Automatically creates ZIP archives from individual files
-- 🔐 **Secure Authentication**: Uses your Coohom API credentials
-- 📊 **Upload Status Tracking**: Monitor upload progress and status
-- 🎯 **Multiple File Formats**: Supports various 3D model and texture formats
+- **🔐 SSO Authentication**: Seamless user authentication with Coohom
+- **🖼️ Iframe Integration**: Embed Coohom design tools directly into your app
+- **👥 User Management**: Register and manage users with unique identifiers
+- **🎨 Multiple Design Tools**: Support for various Coohom design tools
+- **🏷️ White Label Options**: Customize appearance and branding
+- **📱 Responsive Design**: Mobile-friendly interface
+- **🔒 Secure**: MD5 signature authentication and token management
 
-## Setup
+## 🚀 Quick Start
 
-1. **Install Dependencies**:
+### Prerequisites
+
+- Python 3.7 or higher
+- Coohom API credentials (`appkey` and `appsecret`)
+- Internet connection for API calls
+
+### Installation
+
+1. **Clone or download the project files**
+2. **Install dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Configure Credentials**: 
-   Ensure your `credentials.txt` file contains:
+3. **Set up your credentials**:
+   Create a `credentials.txt` file with your Coohom API credentials:
    ```
-   appKey=your_app_key
-   appSecret=your_app_secret
-   api_doc=https://open.coohom.com/pub/saas/open-platform/doc-detail?app_id=1&tag_id=100&node_id=214&doc_tab=doc&node_type=1
+   appKey=your_app_key_here
+   appSecret=your_app_secret_here
    ```
 
-3. **Run the Application**:
+4. **Run the application**:
    ```bash
-   streamlit run app.py
+   streamlit run coohom_iframe_app.py
    ```
 
-## Supported File Formats
+## 📖 How to Use
 
-- **3D Models**: .obj, .fbx, .3ds, .dae, .ply, .stl
-- **Textures**: .jpg, .png, .tga, .bmp
-- **Archives**: .zip (recommended)
+### 1. **Setup API Credentials**
+   - Enter your Coohom API credentials in the sidebar
+   - Or click "Load from credentials.txt" to load from file
+   - Verify API client initialization
 
-## How It Works
+### 2. **User Registration**
+   - Enter user details (AppUID, Name, Email)
+   - Click "Register User" to create Coohom account
+   - Verify successful registration
 
-1. **Upload File**: Select your 3D model file or ZIP archive
-2. **Auto-Processing**: If not a ZIP, the app automatically creates one
-3. **Get Credentials**: Obtains temporary STS credentials from Coohom API
-4. **Upload to OSS**: Uploads the file to Alibaba Cloud OSS
-5. **Track Status**: Monitor upload progress with task ID
+### 3. **Generate SSO Token**
+   - Click "Generate SSO Token" for the registered user
+   - Token is valid for 7 days
+   - Store token securely for production use
 
-## API Integration
+### 4. **Iframe Integration**
+   - Choose integration type (Project List, Design Tools, etc.)
+   - Click "Generate Iframe" to create embeddable URL
+   - Copy the generated HTML code for your application
 
-The app integrates with Coohom's OpenAPI endpoints:
+## 🏗️ Integration Types
 
-- `GET /global/commodity/upload/sts` - Get upload credentials
-- `GET /global/commodity/upload/status` - Check upload status
+### **Project List**
+- Display user's design projects
+- URL: `https://www.coohom.com/pub/saas/apps/project/list`
 
-## Requirements
+### **Design Tool 4.0**
+- Classic design tool interface
+- URL: `https://www.coohom.com/pub/tool/yundesign/cloud?`
 
-- Python 3.7+
-- Streamlit
-- Valid Coohom API credentials
-- Internet connection for API calls
+### **Design Tool 5.0**
+- BIM design tool interface
+- URL: `https://www.coohom.com/pub/tool/bim/cloud?`
 
-## Troubleshooting
+### **Design Tool K&C**
+- Kitchen & Bath design tool
+- URL: `https://www.coohom.com/pub/tool/bim/cloud?&redirecturl=/pub/saas/apps/project/list&ctv=kb`
 
-- **Missing oss2 library**: Install with `pip install oss2`
-- **Authentication errors**: Verify your API credentials in `credentials.txt`
-- **"认证必传信息缺失" error**: Check that `appkey` and `timestamp` are included in request
-- **"request time out" error**: API authentication is working, but the service may be having issues - contact Coohom support
-- **Upload failures**: Check file format and size limits
+### **Custom URL**
+- Embed any Coohom URL of your choice
 
-## Authentication Status
+## 🔧 API Integration
 
-✅ **Authentication Working**: The app successfully authenticates with Coohom API using the correct signature method.
-⚠️ **API Timeouts**: The Coohom API occasionally returns timeout errors, which indicates server-side processing issues rather than authentication problems.
+### **Coohom API Client**
+The application includes a `CoohomAPI` class that handles:
+- MD5 signature generation
+- User registration
+- SSO authentication
+- Error handling
 
-## Security Notes
+### **Key Methods**
+```python
+# Initialize API client
+api_client = CoohomAPI(appkey, appsecret)
 
-- API credentials are loaded from local `credentials.txt`
-- STS tokens are temporary and expire automatically
-- Files are uploaded to Coohom's secure cloud storage
+# Register user
+result = api_client.register_user(appuid, name, email)
+
+# Generate SSO token
+result = api_client.login_user(appuid)
+```
+
+### **Authentication Flow**
+1. Generate timestamp in milliseconds
+2. Create MD5 hash: `md5(appsecret + appkey + appuid + timestamp)`
+3. Call Coohom API with parameters
+4. Handle response and store token
+
+## 🎯 Use Cases
+
+### **Web Applications**
+- Embed Coohom design tools into your website
+- Provide seamless design experience
+- Maintain user context across sessions
+
+### **Streamlit Apps**
+- Create design-focused Streamlit applications
+- Integrate 3D visualization capabilities
+- Build project management dashboards
+
+### **Enterprise Platforms**
+- White-label Coohom tools for your brand
+- Integrate with existing user management systems
+- Synchronize design data across platforms
+
+### **Mobile Applications**
+- Responsive iframe integration
+- Touch-friendly design tools
+- Cross-platform compatibility
+
+## 🔒 Security Features
+
+- **MD5 Signature**: Secure API authentication
+- **Token Expiration**: 7-day token validity
+- **User Isolation**: Unique appuid for each user
+- **HTTPS Required**: Secure communication
+- **Input Validation**: Sanitized user inputs
+- **Error Handling**: Secure error messages
+
+## 📱 Responsive Design
+
+The application is designed to work on:
+- Desktop computers
+- Tablets
+- Mobile phones
+- Various screen resolutions
+
+## 🛠️ Customization
+
+### **Styling**
+- Custom CSS classes for consistent appearance
+- Gradient headers and feature cards
+- Responsive iframe containers
+
+### **Configuration**
+- Configurable API endpoints
+- Customizable user management
+- Flexible integration options
+
+### **White Labeling**
+- Custom domain support
+- Brand customization options
+- Comprehensive white label features
+
+## 📊 Monitoring and Analytics
+
+### **Performance Metrics**
+- API response times
+- Iframe loading performance
+- User interaction tracking
+- Error rate monitoring
+
+### **User Analytics**
+- User registration success rates
+- Feature adoption metrics
+- Session duration tracking
+- User satisfaction scores
+
+## 🔍 Troubleshooting
+
+### **Common Issues**
+
+1. **API Credentials Invalid**
+   - Verify appkey and appsecret
+   - Check Coohom Console access
+   - Contact Coohom support
+
+2. **User Registration Fails**
+   - Ensure unique appuid
+   - Check email format
+   - Verify API permissions
+
+3. **SSO Token Generation Fails**
+   - Confirm user is registered
+   - Check timestamp format
+   - Verify signature generation
+
+4. **Iframe Not Loading**
+   - Check token validity
+   - Verify URL encoding
+   - Test redirect URL directly
+
+### **Debug Steps**
+1. Check browser console for errors
+2. Verify API responses
+3. Test API endpoints independently
+4. Monitor network requests
+5. Check token expiration
+
+## 📚 Documentation
+
+- **`COOHOM_IFRAME_INTEGRATION.md`**: Comprehensive integration guide
+- **`TASKS.md`**: Implementation task list
+- **Coohom API Docs**: [https://open.coohom.com/pub/saas/open-platform/document](https://open.coohom.com/pub/saas/open-platform/document)
+
+## 🤝 Support
+
+### **Technical Support**
+- Review troubleshooting section
+- Check API documentation
+- Contact Coohom support team
+
+### **Feature Requests**
+- Submit through Coohom sales team
+- Request API consultation
+- Discuss custom integrations
+
+## 📄 License
+
+This project is for demonstration purposes. Follow Coohom's API usage terms and maintain proper security practices.
+
+## 🔄 Updates
+
+- **v1.0**: Initial release with basic integration
+- **Future**: Enhanced features and optimizations
+
+---
+
+**Built with ❤️ using Streamlit and Coohom APIs**
+
+*For questions or support, contact the Coohom sales team*

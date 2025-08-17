@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coohom Iframe Integration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin: 2rem auto;
+            padding: 2rem;
+            max-width: 1200px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .header h1 {
+            color: #2c3e50;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            margin-bottom: 2rem;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.5rem;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-ready { background-color: #28a745; }
+        .status-error { background-color: #dc3545; }
+        .iframe-preview {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            background: #f8f9fa;
+            margin-top: 1rem;
+        }
+        .loading {
+            display: none;
+        }
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+        
+        .iframe-wrapper {
+            position: relative;
+            height: 600px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .iframe-container .card-header {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+        }
+        
+        .iframe-container .card-header .btn-outline-secondary {
+            color: white;
+            border-color: white;
+        }
+        
+        .iframe-container .card-header .btn-outline-secondary:hover {
+            background: white;
+            color: #28a745;
+        }
+        
+        /* Browser-like URL Bar Styling */
+        .browser-url-bar {
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 10px 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .url-bar-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .url-bar-left, .url-bar-right {
+            display: flex;
+            align-items: center;
+        }
+        
+        .url-bar-center {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .url-input-group {
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 1px solid #ced4da;
+            border-radius: 20px;
+            padding: 2px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            min-width: 400px;
+        }
+        
+        .url-protocol {
+            background: #e9ecef;
+            color: #6c757d;
+            padding: 6px 12px;
+            border-radius: 18px 0 0 18px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-right: 1px solid #ced4da;
+        }
+        
+        .url-input {
+            border: none;
+            box-shadow: none;
+            border-radius: 0;
+            padding: 6px 12px;
+            font-size: 0.9rem;
+            background: transparent;
+        }
+        
+        .url-input:focus {
+            box-shadow: none;
+            border: none;
+        }
+        
+        .url-input-group .btn {
+            border-radius: 0 18px 18px 0;
+            border: none;
+            background: #007bff;
+            color: white;
+            padding: 6px 12px;
+        }
+        
+        .url-input-group .btn:hover {
+            background: #0056b3;
+        }
+        
+        /* Fullscreen mode */
+        .fullscreen-mode {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+        }
+        
+        .fullscreen-mode .iframe-wrapper {
+            height: calc(100vh - 120px) !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="header">
+                <h1><i class="fas fa-home"></i> Coohom Iframe Integration</h1>
+                <p>Seamlessly integrate Coohom design tools into your applications</p>
+            </div>
+
+            <!-- API Status -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> API Status</h5>
+                </div>
+                <div class="card-body">
+                    <div id="apiStatus">
+                        <span class="status-indicator status-error"></span>
+                        <span>Checking API status...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Management -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-users"></i> User Management</h5>
+                </div>
+                <div class="card-body">
+                    <form id="userForm">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="appuid" class="form-label">User ID (appuid)</label>
+                                    <input type="text" class="form-control" id="appuid" required 
+                                           placeholder="Enter unique user ID" value="jayden">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Name</label>
+                                    <input type="text" class="form-control" id="name" required 
+                                           placeholder="Enter user name">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" required 
+                                           placeholder="Enter user email">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-primary" onclick="registerUser()">
+                                    <i class="fas fa-user-plus"></i> Register User
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-success" onclick="loginUser()">
+                                    <i class="fas fa-sign-in-alt"></i> Generate SSO Token
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <!-- Loading and Status -->
+                    <div id="loading" class="loading mt-3">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            <span>Processing...</span>
+                        </div>
+                    </div>
+                    
+                    <div id="statusMessage" class="mt-3"></div>
+                </div>
+            </div>
+
+            <!-- Open Coohom Button (appears after SSO token generation) -->
+            <div class="card" id="openCoohomSection" style="display: none;">
+                <div class="card-header">
+                    <h5><i class="fas fa-external-link-alt"></i> Open Coohom</h5>
+                </div>
+                <div class="card-body text-center">
+                    <p class="mb-3">SSO token generated successfully! Click the button below to open Coohom in an iframe.</p>
+                    <button type="button" class="btn btn-primary btn-lg" onclick="openCoohomIframe()">
+                        <i class="fas fa-home"></i> Open Coohom
+                    </button>
+                </div>
+            </div>
+
+            <!-- Coohom Iframe Container -->
+            <div class="card" id="iframeContainer" style="display: none;">
+                <div class="card-header">
+                    <h5><i class="fas fa-window-maximize"></i> Coohom Integration</h5>
+                    <div class="float-end">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-outline-info btn-sm" onclick="testUrlConstruction()">
+                                <i class="fas fa-link"></i> Test URLs
+                            </button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="testDifferentUrls()">
+                                <i class="fas fa-cog"></i> Test Endpoints
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="closeIframe()">
+                                <i class="fas fa-times"></i> Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Browser-like URL Bar -->
+                    <div class="browser-url-bar">
+                        <div class="url-bar-content">
+                            <div class="url-bar-left">
+                                <button class="btn btn-sm btn-outline-secondary me-2" onclick="goBack()" title="Go Back">
+                                    <i class="fas fa-arrow-left"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary me-2" onclick="goForward()" title="Go Forward">
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary me-2" onclick="refreshIframe()" title="Refresh">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                            <div class="url-bar-center">
+                                <div class="url-input-group">
+                                    <span class="url-protocol">https://</span>
+                                    <input type="text" id="urlBarInput" class="form-control url-input" placeholder="Enter URL or search..." onkeypress="handleUrlEnter(event)">
+                                    <button class="btn btn-sm btn-primary" onclick="navigateToUrl()" title="Go">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="url-bar-right">
+                                <button class="btn btn-sm btn-outline-info" onclick="openInNewTab()" title="Open in New Tab">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" onclick="toggleFullscreen()" title="Fullscreen">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="iframe-wrapper" style="position: relative; height: 600px; background: #f8f9fa;">
+                        <div id="iframeLoading" class="text-center p-5">
+                            <div class="spinner-border text-primary mb-3" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <h5>Loading Coohom...</h5>
+                            <p class="text-muted">Please wait while the content loads</p>
+                        </div>
+                        <iframe 
+                            id="coohomIframe"
+                            style="width: 100%; height: 100%; border: none; display: none;"
+                            allowfullscreen
+                            onload="hideIframeLoading()"
+                            onerror="showIframeError()">
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Check API status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkApiStatus();
+        });
+
+        async function checkApiStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                const statusElement = document.getElementById('apiStatus');
+                if (data.status === 'ready') {
+                    statusElement.innerHTML = `
+                        <span class="status-indicator status-ready"></span>
+                        <span class="text-success">API Ready - ${data.appkey}</span>
+                    `;
+                } else {
+                    statusElement.innerHTML = `
+                        <span class="status-indicator status-error"></span>
+                        <span class="text-danger">API Error: ${data.message}</span>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('apiStatus').innerHTML = `
+                    <span class="status-indicator status-error"></span>
+                    <span class="text-danger">Connection Error</span>
+                `;
+            }
+        }
+
+        async function registerUser() {
+            const appuid = document.getElementById('appuid').value;
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            
+            if (!appuid || !name || !email) {
+                showStatus('Please fill in all fields', 'danger');
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ appuid, name, email })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus(data.message, 'success');
+                } else {
+                    showStatus(data.error, 'danger');
+                }
+            } catch (error) {
+                showStatus('Registration failed: ' + error.message, 'danger');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loginUser() {
+            const appuid = document.getElementById('appuid').value;
+            
+            if (!appuid) {
+                showStatus('Please enter a User ID', 'danger');
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ appuid })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('SSO token generated successfully!', 'success');
+                    showOpenCoohomButton();
+                } else {
+                    showStatus(data.error, 'danger');
+                }
+            } catch (error) {
+                showStatus('Login failed: ' + error.message, 'danger');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function showOpenCoohomButton() {
+            document.getElementById('openCoohomSection').style.display = 'block';
+        }
+
+        async function openCoohomIframe() {
+            // Show iframe container
+            document.getElementById('iframeContainer').style.display = 'block';
+            
+            // Show loading initially
+            document.getElementById('iframeLoading').style.display = 'block';
+            document.getElementById('coohomIframe').style.display = 'none';
+            
+            try {
+                // Get the iframe URL from the Flask API
+                const response = await fetch('/coohom-iframe');
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Get the iframe element
+                    const iframe = document.getElementById('coohomIframe');
+                    
+                    // Debug: Show the URL being loaded
+                    console.log('Loading Coohom iframe with:', data);
+                    console.log('Iframe URL:', data.iframe_url);
+                    console.log('SSO Token:', data.sso_token);
+                    console.log('SSO URL:', data.sso_url);
+                    
+                    // Store data globally for testing
+                    window.lastIframeData = data;
+                    
+                    // Set the Coohom URL with SSO token
+                    iframe.src = data.iframe_url;
+                    
+                    // Update URL bar to show the current URL
+                    updateUrlBar(data.iframe_url);
+                    
+                    // Scroll to iframe
+                    document.getElementById('iframeContainer').scrollIntoView({ behavior: 'smooth' });
+                    
+                    // Show debug info in the UI
+                    showIframeDebugInfo(data);
+                } else {
+                    showIframeError(data.error || 'Failed to get iframe URL');
+                }
+            } catch (error) {
+                showIframeError('Error connecting to server: ' + error.message);
+            }
+        }
+        
+        function showIframeDebugInfo(data) {
+            // Add debug info below the iframe
+            const debugDiv = document.createElement('div');
+            debugDiv.className = 'alert alert-info mt-3';
+            debugDiv.innerHTML = `
+                <h6><i class="fas fa-info-circle"></i> Debug Information</h6>
+                <p><strong>Iframe URL:</strong> <code>${data.iframe_url}</code></p>
+                <p><strong>SSO Token:</strong> <code>${data.sso_token ? data.sso_token.substring(0, 50) + '...' : 'None'}</code></p>
+                <p><strong>SSO URL:</strong> <code>${data.sso_url || 'None'}</code></p>
+                <p><strong>Expires:</strong> <code>${data.expires || 'Unknown'}</code></p>
+            `;
+            
+            // Remove any existing debug info
+            const existingDebug = document.querySelector('.iframe-container .alert');
+            if (existingDebug) {
+                existingDebug.remove();
+            }
+            
+            // Add new debug info
+            document.querySelector('.iframe-container .card-body').appendChild(debugDiv);
+        }
+        
+        function testDifferentUrls() {
+            // Create a modal to test different Coohom URLs
+            const modalHtml = `
+                <div class="modal fade" id="urlTestModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Test Different Coohom URLs</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="text-muted mb-3">Try different Coohom URLs to find the correct authenticated endpoint:</p>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">SSO URL (from login response):</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="ssoUrlInput" placeholder="e.g., /pub/saas/...">
+                                        <button class="btn btn-primary" onclick="testUrl('sso')">Test</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Design Tool URL:</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="designToolInput" value="https://www.coohom.com/pub/tool/yundesign/cloud" readonly>
+                                        <button class="btn btn-primary" onclick="testUrl('design')">Test</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Project List URL:</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="projectListInput" value="https://www.coohom.com/pub/saas/apps/project/list" readonly>
+                                        <button class="btn btn-primary" onclick="testUrl('project')">Test</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="btn btn-outline-warning" onclick="testUrl('custom')">
+                                        <i class="fas fa-magic"></i> Try with SSO Token in URL
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            const existingModal = document.getElementById('urlTestModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to body
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('urlTestModal'));
+            modal.show();
+            
+            // Populate SSO URL if available
+            const ssoUrlInput = document.getElementById('ssoUrlInput');
+            if (window.lastIframeData && window.lastIframeData.sso_url) {
+                ssoUrlInput.value = window.lastIframeData.sso_url;
+            }
+        }
+        
+        function testUrl(type) {
+            let url = '';
+            
+            switch(type) {
+                case 'sso':
+                    const ssoUrl = document.getElementById('ssoUrlInput').value;
+                    if (ssoUrl) {
+                        url = `https://www.coohom.com${ssoUrl}`;
+                    } else {
+                        alert('Please enter an SSO URL');
+                        return;
+                    }
+                    break;
+                case 'design':
+                    url = 'https://www.coohom.com/pub/tool/yundesign/cloud';
+                    break;
+                case 'project':
+                    url = 'https://www.coohom.com/pub/saas/apps/project/list';
+                    break;
+                case 'custom':
+                    // Try to construct a URL with the SSO token
+                    if (window.lastIframeData && window.lastIframeData.sso_token) {
+                        url = `https://www.coohom.com/pub/tool/yundesign/cloud?token=${window.lastIframeData.sso_token}`;
+                    } else {
+                        alert('No SSO token available');
+                        return;
+                    }
+                    break;
+            }
+            
+            if (url) {
+                // Load the URL in the iframe
+                const iframe = document.getElementById('coohomIframe');
+                iframe.src = url;
+                
+                // Show loading
+                document.getElementById('iframeLoading').style.display = 'block';
+                iframe.style.display = 'none';
+                
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('urlTestModal')).hide();
+                
+                // Show the URL being tested
+                showStatus(`Testing URL: ${url}`, 'info');
+            }
+        }
+        
+        async function testUrlConstruction() {
+            try {
+                const response = await fetch('/test-url');
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Create a modal to show the URL construction test results
+                    const modalHtml = `
+                        <div class="modal fade" id="urlConstructionModal" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">URL Construction Test Results</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <h6>Session Data:</h6>
+                                        <ul>
+                                            <li><strong>SSO Token:</strong> <code>${data.session_data.sso_token || 'None'}</code></li>
+                                            <li><strong>SSO URL:</strong> <code>${data.session_data.sso_url || 'None'}</code></li>
+                                            <li><strong>Token Length:</strong> ${data.session_data.token_length}</li>
+                                        </ul>
+                                        
+                                        <h6>Test URLs:</h6>
+                                        <div class="mb-3">
+                                            <label class="form-label">Kujiale Style (NEW - RECOMMENDED):</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" value="${data.test_urls.kujiale_style || 'N/A'}" readonly>
+                                                <button class="btn btn-success" onclick="testSpecificUrl('${data.test_urls.kujiale_style}')">🚀 Test This First</button>
+                                            </div>
+                                            <small class="text-muted">Based on Kujiale pattern: /open/login?access_token={token}</small>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Design Tool with Token:</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" value="${data.test_urls.design_tool_with_token || 'N/A'}" readonly>
+                                                <button class="btn btn-primary" onclick="testSpecificUrl('${data.test_urls.design_tool_with_token}')">Test</button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Project List with Token:</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" value="${data.test_urls.project_list_with_token || 'N/A'}" readonly>
+                                                <button class="btn btn-primary" onclick="testSpecificUrl('${data.test_urls.project_list_with_token}')">Test</button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">SSO URL Direct:</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" value="${data.test_urls.sso_url_direct || 'N/A'}" readonly>
+                                                <button class="btn btn-secondary" onclick="testSpecificUrl('${data.test_urls.sso_url_direct}')">Test</button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="alert alert-info">
+                                            <strong>🔍 New Approach:</strong> ${data.recommendation}
+                                            <br><small>Following the Kujiale authentication pattern: /open/login?access_token={token}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Remove existing modal if any
+                    const existingModal = document.getElementById('urlConstructionModal');
+                    if (existingModal) {
+                        existingModal.remove();
+                    }
+                    
+                    // Add modal to body
+                    document.body.insertAdjacentHTML('beforeend', modalHtml);
+                    
+                    // Show modal
+                    const modal = new bootstrap.Modal(document.getElementById('urlConstructionModal'));
+                    modal.show();
+                } else {
+                    showStatus('Failed to test URL construction: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                showStatus('Error testing URL construction: ' + error.message, 'danger');
+            }
+        }
+        
+        function testSpecificUrl(url) {
+            if (url && url !== 'N/A') {
+                // Load the URL in the iframe
+                const iframe = document.getElementById('coohomIframe');
+                iframe.src = url;
+                
+                // Update URL bar
+                updateUrlBar(url);
+                
+                // Show loading
+                document.getElementById('iframeLoading').style.display = 'block';
+                iframe.style.display = 'none';
+                
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('urlConstructionModal')).hide();
+                
+                // Show the URL being tested
+                showStatus(`Testing URL: ${url}`, 'info');
+            }
+        }
+        
+        // Browser-like functionality
+        function updateUrlBar(url) {
+            const urlInput = document.getElementById('urlBarInput');
+            if (urlInput) {
+                // Remove protocol for display
+                const displayUrl = url.replace(/^https?:\/\//, '');
+                urlInput.value = displayUrl;
+            }
+        }
+        
+        function goBack() {
+            // Note: iframe navigation history is limited due to security restrictions
+            showStatus('Back navigation not available in iframe due to security restrictions', 'warning');
+        }
+        
+        function goForward() {
+            // Note: iframe navigation history is limited due to security restrictions
+            showStatus('Forward navigation not available in iframe due to security restrictions', 'warning');
+        }
+        
+        function refreshIframe() {
+            const iframe = document.getElementById('coohomIframe');
+            if (iframe && iframe.src) {
+                iframe.src = iframe.src;
+                showStatus('Refreshing iframe...', 'info');
+            }
+        }
+        
+        function navigateToUrl() {
+            const urlInput = document.getElementById('urlBarInput');
+            const url = urlInput.value.trim();
+            
+            if (url) {
+                let fullUrl = url;
+                
+                // Add protocol if missing
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    fullUrl = 'https://' + url;
+                }
+                
+                // Load the URL in the iframe
+                const iframe = document.getElementById('coohomIframe');
+                iframe.src = fullUrl;
+                
+                // Show loading
+                document.getElementById('iframeLoading').style.display = 'block';
+                iframe.style.display = 'none';
+                
+                // Update URL bar
+                updateUrlBar(fullUrl);
+                
+                showStatus(`Navigating to: ${fullUrl}`, 'info');
+            }
+        }
+        
+        function handleUrlEnter(event) {
+            if (event.key === 'Enter') {
+                navigateToUrl();
+            }
+        }
+        
+        function openInNewTab() {
+            const iframe = document.getElementById('coohomIframe');
+            if (iframe && iframe.src) {
+                window.open(iframe.src, '_blank');
+            }
+        }
+        
+        function toggleFullscreen() {
+            const iframeContainer = document.getElementById('iframeContainer');
+            if (iframeContainer) {
+                iframeContainer.classList.toggle('fullscreen-mode');
+                
+                const btn = event.target.closest('button');
+                const icon = btn.querySelector('i');
+                
+                if (iframeContainer.classList.contains('fullscreen-mode')) {
+                    icon.className = 'fas fa-compress';
+                    showStatus('Entered fullscreen mode', 'info');
+                } else {
+                    icon.className = 'fas fa-expand';
+                    showStatus('Exited fullscreen mode', 'info');
+                }
+            }
+        }
+
+        function hideIframeLoading() {
+            document.getElementById('iframeLoading').style.display = 'none';
+            document.getElementById('coohomIframe').style.display = 'block';
+        }
+
+        function showIframeError(errorMessage = 'There was an issue loading the Coohom content.') {
+            document.getElementById('iframeLoading').innerHTML = `
+                <div class="text-center p-5">
+                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                    <h5>Error Loading Coohom</h5>
+                    <p class="text-muted">${errorMessage}</p>
+                    <button type="button" class="btn btn-primary" onclick="openCoohomIframe()">
+                        <i class="fas fa-sync-alt"></i> Retry
+                    </button>
+                </div>
+            `;
+        }
+
+        function closeIframe() {
+            document.getElementById('iframeContainer').style.display = 'none';
+            document.getElementById('coohomIframe').src = '';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

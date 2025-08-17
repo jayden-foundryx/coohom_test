@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coohom Iframe Integration - Standalone</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin: 2rem auto;
+            padding: 2rem;
+            max-width: 1400px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            color: #2c3e50;
+            font-weight: 700;
+        }
+        .iframe-container {
+            border: 2px solid #dee2e6;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin: 1rem 0;
+        }
+        .iframe-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .iframe-frame {
+            width: 100%;
+            height: 600px;
+            border: none;
+            background: white;
+        }
+        .controls {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .btn-control {
+            border-radius: 20px;
+            padding: 8px 20px;
+            margin: 0 5px;
+        }
+        .url-input {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+        }
+        .url-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .preset-urls {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .preset-url {
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .preset-url:hover {
+            background-color: #e9ecef;
+        }
+        .preset-url.active {
+            background-color: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="header">
+                <h1><i class="fas fa-home"></i> Coohom Iframe Integration - Standalone</h1>
+                <p class="text-muted">No server required - pure HTML/JavaScript solution</p>
+            </div>
+
+            <!-- URL Configuration -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5><i class="fas fa-cog"></i> Iframe Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <label for="iframeUrl" class="form-label">Coohom URL:</label>
+                            <input type="url" class="form-control url-input" id="iframeUrl" 
+                                   placeholder="Enter Coohom URL or select from presets below"
+                                   value="https://www.coohom.com/pub/saas/apps/project/list">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button class="btn btn-primary" onclick="loadIframe()">
+                                    <i class="fas fa-play"></i> Load Iframe
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preset URLs -->
+                    <div class="preset-urls">
+                        <h6><i class="fas fa-bookmark"></i> Preset URLs:</h6>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="preset-url" onclick="setPresetUrl('https://www.coohom.com/pub/saas/apps/project/list', this)">
+                                    <i class="fas fa-list"></i> Project List
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="preset-url" onclick="setPresetUrl('https://www.coohom.com/pub/tool/yundesign/cloud', this)">
+                                    <i class="fas fa-paint-brush"></i> Design Tool 4.0
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="preset-url" onclick="setPresetUrl('https://www.coohom.com/pub/tool/bim/cloud', this)">
+                                    <i class="fas fa-cube"></i> Design Tool 5.0
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="preset-url" onclick="setPresetUrl('https://www.coohom.com/b2b', this)">
+                                    <i class="fas fa-building"></i> B2B Portal
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Iframe Display -->
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5><i class="fas fa-window-maximize"></i> Iframe Display</h5>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Controls -->
+                    <div class="controls">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-outline-primary btn-control" onclick="refreshIframe()">
+                                        <i class="fas fa-sync-alt"></i> Refresh
+                                    </button>
+                                    <button class="btn btn-outline-success btn-control" onclick="openInNewTab()">
+                                        <i class="fas fa-external-link-alt"></i> New Tab
+                                    </button>
+                                    <button class="btn btn-outline-info btn-control" onclick="toggleFullscreen()">
+                                        <i class="fas fa-expand"></i> Fullscreen
+                                    </button>
+                                    <button class="btn btn-outline-warning btn-control" onclick="copyEmbedCode()">
+                                        <i class="fas fa-code"></i> Copy Code
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <span class="badge bg-success">Ready</span>
+                                <span class="badge bg-info" id="urlStatus">No URL loaded</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Iframe Container -->
+                    <div class="iframe-container">
+                        <div class="iframe-header">
+                            <div>
+                                <h6 class="mb-0" id="iframeTitle">Coohom Integration</h6>
+                                <small id="iframeUrl">No URL loaded</small>
+                            </div>
+                            <div>
+                                <button class="btn btn-outline-light btn-sm" onclick="clearIframe()">
+                                    <i class="fas fa-times"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="iframeContent" class="text-center p-5">
+                            <i class="fas fa-window-maximize fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted">Iframe Preview</h5>
+                            <p class="text-muted">Enter a URL above and click "Load Iframe" to see the content</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Embed Code -->
+            <div class="card" id="embedCodeSection" style="display: none;">
+                <div class="card-header bg-dark text-white">
+                    <h5><i class="fas fa-code"></i> Embed Code</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>HTML Iframe Code:</h6>
+                            <div class="bg-light p-3 rounded">
+                                <code id="htmlCode"></code>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>JavaScript Embed:</h6>
+                            <div class="bg-light p-3 rounded">
+                                <code id="jsCode"></code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5><i class="fas fa-info-circle"></i> How to Use</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>For Development:</h6>
+                            <ol>
+                                <li>Enter a Coohom URL or select from presets</li>
+                                <li>Click "Load Iframe" to preview</li>
+                                <li>Use the controls to manage the iframe</li>
+                                <li>Copy the embed code for your application</li>
+                            </ol>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>For Production:</h6>
+                            <ol>
+                                <li>Use the generated HTML iframe code</li>
+                                <li>Ensure your domain allows iframe embedding</li>
+                                <li>Handle CORS and security considerations</li>
+                                <li>Test across different browsers</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        let currentUrl = '';
+        let isFullscreen = false;
+
+        function setPresetUrl(url, element) {
+            // Remove active class from all preset URLs
+            document.querySelectorAll('.preset-url').forEach(el => el.classList.remove('active'));
+            // Add active class to clicked element
+            element.classList.add('active');
+            
+            document.getElementById('iframeUrl').value = url;
+            currentUrl = url;
+        }
+
+        function loadIframe() {
+            const url = document.getElementById('iframeUrl').value.trim();
+            
+            if (!url) {
+                alert('Please enter a valid URL');
+                return;
+            }
+            
+            currentUrl = url;
+            
+            // Update iframe content
+            const iframeContent = document.getElementById('iframeContent');
+            iframeContent.innerHTML = `
+                <iframe 
+                    src="${url}" 
+                    class="iframe-frame"
+                    allowfullscreen
+                    onload="iframeLoaded()"
+                    onerror="iframeError()">
+                    <p>Your browser does not support iframes. 
+                       <a href="${url}" target="_blank">Click here to open in new tab</a>
+                    </p>
+                </iframe>
+            `;
+            
+            // Update header
+            document.getElementById('iframeTitle').textContent = 'Coohom Integration';
+            document.getElementById('iframeUrl').textContent = url;
+            document.getElementById('urlStatus').textContent = 'URL loaded';
+            
+            // Show embed code section
+            showEmbedCode(url);
+        }
+
+        function iframeLoaded() {
+            document.getElementById('urlStatus').textContent = 'Iframe loaded';
+            document.getElementById('urlStatus').className = 'badge bg-success';
+        }
+
+        function iframeError() {
+            document.getElementById('urlStatus').textContent = 'Load error';
+            document.getElementById('urlStatus').className = 'badge bg-danger';
+        }
+
+        function refreshIframe() {
+            if (currentUrl) {
+                loadIframe();
+            }
+        }
+
+        function openInNewTab() {
+            if (currentUrl) {
+                window.open(currentUrl, '_blank');
+            }
+        }
+
+        function toggleFullscreen() {
+            if (!isFullscreen) {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    document.documentElement.webkitRequestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    document.documentElement.msRequestFullscreen();
+                }
+                isFullscreen = true;
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                isFullscreen = false;
+            }
+        }
+
+        function clearIframe() {
+            document.getElementById('iframeContent').innerHTML = `
+                <i class="fas fa-window-maximize fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">Iframe Preview</h5>
+                <p class="text-muted">Enter a URL above and click "Load Iframe" to see the content</p>
+            `;
+            document.getElementById('iframeTitle').textContent = 'Coohom Integration';
+            document.getElementById('iframeUrl').textContent = 'No URL loaded';
+            document.getElementById('urlStatus').textContent = 'No URL loaded';
+            document.getElementById('urlStatus').className = 'badge bg-info';
+            document.getElementById('embedCodeSection').style.display = 'none';
+            currentUrl = '';
+        }
+
+        function showEmbedCode(url) {
+            const htmlCode = `<iframe src="${url}" width="100%" height="600px" frameborder="0" allowfullscreen></iframe>`;
+            const jsCode = `// Create iframe dynamically
+const iframe = document.createElement('iframe');
+iframe.src = '${url}';
+iframe.width = '100%';
+iframe.height = '600px';
+iframe.frameBorder = '0';
+iframe.allowFullscreen = true;
+document.getElementById('container').appendChild(iframe);`;
+
+            document.getElementById('htmlCode').textContent = htmlCode;
+            document.getElementById('jsCode').textContent = jsCode;
+            document.getElementById('embedCodeSection').style.display = 'block';
+        }
+
+        function copyEmbedCode() {
+            const htmlCode = document.getElementById('htmlCode').textContent;
+            navigator.clipboard.writeText(htmlCode).then(() => {
+                alert('HTML code copied to clipboard!');
+            });
+        }
+
+        // Handle fullscreen change events
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+        function handleFullscreenChange() {
+            isFullscreen = !!document.fullscreenElement || 
+                          !!document.webkitFullscreenElement || 
+                          !!document.msFullscreenElement;
+        }
+
+        // Initialize with first preset URL
+        document.addEventListener('DOMContentLoaded', function() {
+            setPresetUrl('https://www.coohom.com/pub/saas/apps/project/list', 
+                        document.querySelector('.preset-url'));
+        });
+    </script>
+</body>
+</html>

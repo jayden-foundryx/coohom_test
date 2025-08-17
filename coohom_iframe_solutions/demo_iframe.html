@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coohom Iframe Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .iframe-container {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .iframe-header {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #5a6fd8;
+        }
+        .url-input {
+            width: 70%;
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .status {
+            text-align: center;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 Coohom Iframe Demo</h1>
+        
+        <div class="controls">
+            <input type="url" id="urlInput" class="url-input" 
+                   placeholder="Enter Coohom URL here"
+                   value="https://www.coohom.com/pub/saas/apps/project/list">
+            <br>
+            <button onclick="loadIframe()">Load Iframe</button>
+            <button onclick="refreshIframe()">Refresh</button>
+            <button onclick="openInNewTab()">Open in New Tab</button>
+            <button onclick="clearIframe()">Clear</button>
+        </div>
+
+        <div id="status" class="status" style="display: none;"></div>
+
+        <div class="iframe-container">
+            <div class="iframe-header">
+                <h3>Coohom Design Tools</h3>
+                <p>Embed Coohom applications in your website</p>
+            </div>
+            <div id="iframeContent">
+                <div style="text-align: center; padding: 50px;">
+                    <h4>Iframe Preview</h4>
+                    <p>Enter a URL above and click "Load Iframe" to see the content</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <h4>Quick Test URLs:</h4>
+            <button onclick="testUrl('https://www.coohom.com/pub/saas/apps/project/list')">Project List</button>
+            <button onclick="testUrl('https://www.coohom.com/pub/tool/yundesign/cloud')">Design Tool 4.0</button>
+            <button onclick="testUrl('https://www.coohom.com/pub/tool/bim/cloud')">Design Tool 5.0</button>
+            <button onclick="testUrl('https://www.coohom.com/b2b')">B2B Portal</button>
+        </div>
+    </div>
+
+    <script>
+        let currentUrl = '';
+
+        function loadIframe() {
+            const url = document.getElementById('urlInput').value.trim();
+            
+            if (!url) {
+                showStatus('Please enter a valid URL', 'error');
+                return;
+            }
+            
+            currentUrl = url;
+            
+            const iframeContent = document.getElementById('iframeContent');
+            iframeContent.innerHTML = `
+                <iframe 
+                    src="${url}" 
+                    onload="iframeLoaded()"
+                    onerror="iframeError()">
+                    <p>Your browser does not support iframes. 
+                       <a href="${url}" target="_blank">Click here to open in new tab</a>
+                    </p>
+                </iframe>
+            `;
+            
+            showStatus('Iframe loading...', 'success');
+        }
+
+        function iframeLoaded() {
+            showStatus('Iframe loaded successfully!', 'success');
+        }
+
+        function iframeError() {
+            showStatus('Error loading iframe. Check the URL and try again.', 'error');
+        }
+
+        function refreshIframe() {
+            if (currentUrl) {
+                loadIframe();
+            } else {
+                showStatus('No iframe loaded to refresh', 'error');
+            }
+        }
+
+        function openInNewTab() {
+            if (currentUrl) {
+                window.open(currentUrl, '_blank');
+            } else {
+                showStatus('No iframe loaded to open', 'error');
+            }
+        }
+
+        function clearIframe() {
+            document.getElementById('iframeContent').innerHTML = `
+                <div style="text-align: center; padding: 50px;">
+                    <h4>Iframe Preview</h4>
+                    <p>Enter a URL above and click "Load Iframe" to see the content</p>
+                </div>
+            `;
+            currentUrl = '';
+            showStatus('Iframe cleared', 'success');
+        }
+
+        function testUrl(url) {
+            document.getElementById('urlInput').value = url;
+            loadIframe();
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Auto-load the default URL on page load
+        window.onload = function() {
+            setTimeout(() => {
+                loadIframe();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>
