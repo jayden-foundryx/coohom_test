@@ -42,21 +42,35 @@ def main():
         st.header("🔑 API Configuration")
         
         # Load credentials from file if available
-        credentials_file = "credentials.txt"
+        # Try credentials.txt first, then credential.txt (to match coohom_api.py logic)
         default_app_key = ""
         default_app_secret = ""
         
-        if os.path.exists(credentials_file):
-            try:
-                with open(credentials_file, 'r') as f:
-                    lines = f.readlines()
-                    for line in lines:
-                        if line.startswith('appKey='):
-                            default_app_key = line.split('=')[1].strip()
-                        elif line.startswith('appSecret='):
-                            default_app_secret = line.split('=')[1].strip()
-            except Exception as e:
-                st.warning(f"Could not load credentials: {e}")
+        credentials_loaded = False
+        for filename in ['credentials.txt', 'credential.txt']:
+            if os.path.exists(filename):
+                try:
+                    with open(filename, 'r') as f:
+                        lines = f.readlines()
+                        for line in lines:
+                            if line.startswith('appKey='):
+                                default_app_key = line.split('=')[1].strip()
+                            elif line.startswith('appSecret='):
+                                default_app_secret = line.split('=')[1].strip()
+                    
+                    # Check if we successfully loaded both credentials
+                    if default_app_key and default_app_secret:
+                        credentials_loaded = True
+                        st.success(f"✅ Credentials loaded from {filename}")
+                        break
+                    else:
+                        st.warning(f"⚠️ {filename} exists but is incomplete")
+                        
+                except Exception as e:
+                    st.warning(f"⚠️ Could not load credentials from {filename}: {e}")
+        
+        if not credentials_loaded:
+            st.warning("⚠️ No valid credentials file found. Please create credentials.txt or credential.txt")
         
         app_key = st.text_input("App Key", value=default_app_key, type="password")
         app_secret = st.text_input("App Secret", value=default_app_secret, type="password")
@@ -148,8 +162,20 @@ def main():
                 model_name = st.text_input("Model Name", 
                                          value=uploaded_file.name.split('.')[0],
                                          help="Name for your 3D model")
-                pos = st.number_input("Position", value=99, min_value=1, max_value=999,
-                                    help="Position value for the model")
+                pos_input = st.text_input("Position (Optional)", value="", 
+                                        help="Position value for the model. Leave blank if not needed. For lighting design library use 99.")
+                
+                # Convert to integer if provided, otherwise None
+                pos = None
+                if pos_input.strip():
+                    try:
+                        pos = int(pos_input)
+                        if pos < 1 or pos > 999:
+                            st.warning("⚠️ Position should be between 1 and 999")
+                            pos = None
+                    except ValueError:
+                        st.warning("⚠️ Position should be a valid number")
+                        pos = None
             
             with col2:
                 prod_cat = st.number_input("Product Category ID", value=288, min_value=1,
@@ -158,7 +184,7 @@ def main():
                                               help="Brand good code identifier")
             
             with col3:
-                brand_cats_input = st.text_input("Brand Category IDs", value="3FO4K6E984C7",
+                brand_cats_input = st.text_input("Brand Category IDs", value="3FO4JXABJ2W6",
                                                help="Comma-separated brand category IDs")
                 brand_cats = [cat.strip() for cat in brand_cats_input.split(',') if cat.strip()]
             
@@ -393,7 +419,8 @@ def main():
                             st.markdown("**What happens:** Submit your model with configured parameters")
                             st.markdown(f"**Task ID:** `{st.session_state.upload_task_id}`")
                             st.markdown(f"**Model Name:** {st.session_state.model_name}")
-                            st.markdown(f"**Position:** {st.session_state.pos}")
+                            pos_display = str(st.session_state.pos) if st.session_state.pos is not None else "Not set (optional)"
+                            st.markdown(f"**Position:** {pos_display}")
                             st.markdown(f"**Product Category:** {st.session_state.prod_cat}")
                         
                         with col2:
@@ -401,14 +428,20 @@ def main():
                             if st.button("🚀 Submit Model", type="primary", use_container_width=True):
                                 with st.spinner("🚀 Submitting model..."):
                                     try:
-                                        submit_result = uploader.submit_parsed_model(
-                                            st.session_state.upload_task_id,
-                                            model_name=st.session_state.model_name,
-                                            pos=st.session_state.pos,
-                                            prod_cat=st.session_state.prod_cat,
-                                            brand_cats=st.session_state.brand_cats,
-                                            brand_good_code=st.session_state.brand_good_code
-                                        )
+                                        # Only pass pos if it's provided
+                                        submit_kwargs = {
+                                            'upload_task_id': st.session_state.upload_task_id,
+                                            'model_name': st.session_state.model_name,
+                                            'prod_cat': st.session_state.prod_cat,
+                                            'brand_cats': st.session_state.brand_cats,
+                                            'brand_good_code': st.session_state.brand_good_code
+                                        }
+                                        
+                                        # Add pos only if it's not None
+                                        if st.session_state.pos is not None:
+                                            submit_kwargs['pos'] = st.session_state.pos
+                                        
+                                        submit_result = uploader.submit_parsed_model(**submit_kwargs)
                                         
                                         if 'error' in submit_result:
                                             st.error(f"❌ Model submission failed: {submit_result['error']}")
@@ -435,18 +468,24 @@ def main():
                             if st.button("🛡️ Safe Submit", type="secondary", use_container_width=True):
                                 with st.spinner("🛡️ Starting safe submission..."):
                                     try:
-                                        safe_result = uploader.safe_submit_parsed_model(
-                                            st.session_state.upload_task_id,
-                                            model_name=st.session_state.model_name,
-                                            pos=st.session_state.pos,
-                                            prod_cat=st.session_state.prod_cat,
-                                            brand_cats=st.session_state.brand_cats,
-                                            brand_good_code=st.session_state.brand_good_code,
-                                            auto_poll=auto_poll,
-                                            max_poll_attempts=max_poll_attempts,
-                                            poll_interval_minutes=poll_interval,
-                                            show_debug=debug_mode
-                                        )
+                                        # Only pass pos if it's provided
+                                        safe_submit_kwargs = {
+                                            'upload_task_id': st.session_state.upload_task_id,
+                                            'model_name': st.session_state.model_name,
+                                            'prod_cat': st.session_state.prod_cat,
+                                            'brand_cats': st.session_state.brand_cats,
+                                            'brand_good_code': st.session_state.brand_good_code,
+                                            'auto_poll': auto_poll,
+                                            'max_poll_attempts': max_poll_attempts,
+                                            'poll_interval_minutes': poll_interval,
+                                            'show_debug': debug_mode
+                                        }
+                                        
+                                        # Add pos only if it's not None
+                                        if st.session_state.pos is not None:
+                                            safe_submit_kwargs['pos'] = st.session_state.pos
+                                        
+                                        safe_result = uploader.safe_submit_parsed_model(**safe_submit_kwargs)
                                         
                                         if safe_result.get('success'):
                                             if safe_result.get('submission_skipped'):
@@ -619,7 +658,6 @@ def main():
                         submit_result = uploader.submit_parsed_model(
                             manual_task_id,
                             model_name="Manual Submission",
-                            pos=99,
                             prod_cat=288
                         )
                         if 'error' in submit_result:
@@ -652,6 +690,7 @@ def main():
         1. **Enter your API credentials** in the sidebar
         2. **Select a 3D model file** (OBJ, FBX, 3DS, DAE, BLEND, or ZIP)
         3. **Configure model settings** (name, category, etc.)
+           - **Position**: Optional field. Leave blank for product uploads, use 99 for lighting design library
         4. **Click 'Start Manual Step-by-Step Workflow'**
         5. **Complete each step manually:**
            - Step 1: Get STS Credentials
